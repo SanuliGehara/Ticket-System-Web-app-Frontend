@@ -1,50 +1,173 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
-const CustomerPanel = () => {
-  const [selectedTickets, setSelectedTickets] = useState([]);
-  const totalSeats = 10; // Adjust this number as needed
+const CustomerPage = () => {
+  const [config, setConfig] = useState({});
+  const [rows, setRows] = useState([]);
+  const [ticketsToBuy, setTicketsToBuy] = useState(1);
 
-  const handleSeatClick = (seat) => {
-    setSelectedTickets((prev) =>
-      prev.includes(seat) ? prev.filter((s) => s !== seat) : [...prev, seat]
-    );
+  // Fetch configuration on mount
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const response = await axios.get("http://localhost:8080/configuration");
+        console.log("API Response:", response.data);
+        const configData = response.data;
+        setConfig(configData);
+
+        // Validate and calculate layout dimensions
+        const maxTicketCapacity = configData.maxTicketCapacity || 48;
+        const seatPerRaw = configData.seatPerRaw || 5;
+        console.log("Max Ticket Capacity:", maxTicketCapacity);
+        console.log("Seats Per Row:", seatPerRaw);
+
+        if (maxTicketCapacity && seatPerRaw) {
+          const rowsCount = Math.ceil(maxTicketCapacity / seatPerRaw);
+          const layout = [];
+          let seatCounter = 1;
+
+          for (let i = 0; i < rowsCount; i++) {
+            const row = [];
+            for (
+              let j = 0;
+              j < seatPerRaw && seatCounter <= maxTicketCapacity;
+              j++
+            ) {
+              row.push(seatCounter);
+              seatCounter++;
+            }
+            layout.push(row);
+          }
+
+          console.log("Generated Rows:", layout);
+          setRows(layout);
+        }
+      } catch (error) {
+        console.error("Error fetching configuration:", error);
+      }
+    };
+
+    fetchConfig();
+  }, []);
+
+  // Handle ticket purchase
+  const handlePurchase = async () => {
+    const totalPrice = ticketsToBuy * config.priceOfATicket;
+
+    // 1) Instert a record to transaction table in db
+    let dbTicketId = ticketsToBuy + "-<";
+    let seperator, closeBracket;
+    if (ticketsToBuy === 1) {
+      seperator = "";
+      closeBracket = ">";
+    } else {
+      seperator = "_";
+      closeBracket = ">";
+    }
+
+    // Create ticket ID's to enter to db
+    for (let i = 1; i <= ticketsToBuy; i++) {
+      if (i === ticketsToBuy) {
+        seperator = "";
+      }
+      dbTicketId = dbTicketId + i + seperator;
+    }
+    dbTicketId = dbTicketId + closeBracket;
+    alert("db ticket id: " + dbTicketId);
+    try {
+      await axios.post(
+        `http://localhost:8080/transactions/add?type=PURCHASE&ticketId=${dbTicketId}&customerId=wasa@gmail.com`
+      );
+      alert(`Successfully bought ${ticketsToBuy} tickets for RS ${totalPrice}`); // transaction record saved
+    } catch (error) {
+      alert(
+        "Ticket purchase did not insert to the Transaction table: " + error
+      );
+    }
+
+    // 2) Update records of the ticket table in db (isAvailable = false)
+    try {
+      await axios
+        .post(
+          `http://localhost:8080/tickets/buy?numberOfTickets=${ticketsToBuy}`
+        )
+        .then((response) => {
+          const res = response.data;
+          console.log(res);
+          // show the response (sucess, not) in UI
+        });
+      alert(`Updated isAvaialble in ticket table for ${ticketsToBuy} tickets`);
+    } catch (error) {
+      alert("Could not update the records in Ticket table: " + error);
+    }
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
-      <div className="bg-white shadow-lg rounded-lg p-6 w-96">
-        <h2 className="text-xl font-semibold text-center mb-4">
-          Customer Panel
-        </h2>
-        <div className="grid grid-cols-5 gap-2 mb-6">
-          {Array.from({ length: totalSeats }, (_, i) => i + 1).map((seat) => (
-            <button
-              key={seat}
-              className={`p-4 rounded-full border ${
-                selectedTickets.includes(seat)
-                  ? "bg-green-500 text-white"
-                  : "bg-gray-200"
-              } hover:bg-green-300`}
-              onClick={() => handleSeatClick(seat)}
-            >
-              {seat}
-            </button>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Customer Page</h1>
+
+      {/* Ticket Pool Layout */}
+      <div className="mb-6">
+        <h2 className="text-xl mb-2">Screen</h2>
+        <div className="border-t border-gray-400 w-full mb-4"></div>
+        <div className="space-y-2">
+          {/* Render each row */}
+          {rows.map((row, rowIndex) => (
+            <div key={rowIndex} className="flex gap-2 justify-start">
+              {row.map((seat) => {
+                const isReleased = seat <= config.totalTickets;
+                const isBooked = seat <= config.totalTicketBooked;
+                return (
+                  <div
+                    key={seat}
+                    className={`w-8 h-8 rounded-full border ${
+                      isBooked
+                        ? "bg-red-500"
+                        : isReleased
+                        ? "bg-green-500"
+                        : "bg-gray-200"
+                    }`}
+                  ></div>
+                );
+              })}
+            </div>
           ))}
         </div>
-        <div className="flex items-center space-x-4">
-          <label className="block text-sm font-medium text-gray-700">
-            Total Tickets Buy
-          </label>
-          <input
-            type="text"
-            readOnly
-            value={selectedTickets.length}
-            className="block w-16 p-2 border border-gray-300 rounded-md text-center bg-gray-50 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
       </div>
+
+      {/* Purchase Form */}
+      <div className="mb-6">
+        <label htmlFor="ticketsToBuy" className="block mb-2">
+          No. of Tickets to Buy:
+        </label>
+        <input
+          id="ticketsToBuy"
+          type="number"
+          value={ticketsToBuy}
+          min={1}
+          max={config.maxTicketCapacity - config.totalTicketBooked}
+          onChange={(e) => setTicketsToBuy(Number(e.target.value))}
+          className="border rounded px-2 py-1"
+        />
+      </div>
+
+      <div className="mb-6">
+        <p>
+          Total Price (RS):{" "}
+          <span className="font-bold">
+            {ticketsToBuy * config.priceOfATicket}
+          </span>
+        </p>
+      </div>
+
+      <button
+        onClick={handlePurchase}
+        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+      >
+        Buy Tickets
+      </button>
     </div>
   );
 };
 
-export default CustomerPanel;
+export default CustomerPage;

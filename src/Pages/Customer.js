@@ -36,24 +36,11 @@ const CustomerPage = () => {
         setConfig(configData);
         console.log("Global ", config);
 
-        /*
-        // Validate and calculate layout dimensions
-        setCustomerData({
-          maxTicketCapacity: configData.maxTicketCapacity,
-          seatPerRaw: configData.seatPerRaw,
-          totalTicketBooked: configData.totalTicketBooked,
-        });
-        */
-
-        // const maxTicketCapacity = configData.maxTicketCapacity || 48;
-        // const seatPerRaw = configData.seatPerRaw || 5;
-        // let noOfSeatBooked = configData.totalTicketBooked || 2;
-
         // Calculate layout dimensions
         if (maxTicketCapacity && seatsPerRaw) {
           const rowsCount = Math.ceil(maxTicketCapacity / seatsPerRaw);
           const layout = [];
-          let seatCounter = totalTicketBooked; //1;
+          let seatCounter = 1; //totalTicketBooked;
 
           for (let i = 0; i < rowsCount; i++) {
             const row = [];
@@ -67,34 +54,13 @@ const CustomerPage = () => {
             }
             layout.push(row);
           }
-          /*
-        if (customerData.maxTicketCapacity && customerData.seatPerRaw) {
-          const rowsCount = Math.ceil(
-            customerData.maxTicketCapacity / customerData.seatPerRaw
-          );
-          const layout = [];
-          let seatCounter = customerData.noOfSeatBooked; //1;
-
-          for (let i = 0; i < rowsCount; i++) {
-            const row = [];
-            for (
-              let j = 0;
-              j < customerData.seatPerRaw &&
-              seatCounter <= customerData.maxTicketCapacity;
-              j++
-            ) {
-              row.push(seatCounter);
-              seatCounter++;
-            }
-            layout.push(row);
-          }
-          */
 
           console.log("Generated Rows:", layout);
           setRows(layout);
         }
       } catch (error) {
         console.error("Error fetching configuration:", error);
+        alert("Error fetching configuration:", error);
       }
     };
 
@@ -104,6 +70,11 @@ const CustomerPage = () => {
   // Handle ticket purchase
   const handlePurchase = async () => {
     const totalPrice = ticketsToBuy * config.priceOfATicket;
+
+    // update total tickets booked to update the layout
+    const newtotBokedTickets = totalTicketBooked + ticketsToBuy;
+    setTotalTicketBooked(newtotBokedTickets);
+    console.log("New total tic booked:", newtotBokedTickets);
 
     // 1) Instert a record to transaction table in db
     let dbTicketId = ticketsToBuy + "-<";
@@ -176,8 +147,8 @@ const CustomerPage = () => {
           {rows.map((row, rowIndex) => (
             <div key={rowIndex} className="flex gap-2 justify-start">
               {row.map((seat) => {
-                const isReleased = seat <= config.totalTickets + 1;
-                const isBooked = seat <= totalTicketBooked; //config.totalTicketBooked + 1;
+                const isReleased = seat <= config.totalTickets; //config.totalTickets + 2; total tickets released by vednors
+                const isBooked = seat <= totalTicketBooked; //config.totalTicketBooked + 1; new:   totalTicketBooked + 2
                 return (
                   <div
                     key={seat}

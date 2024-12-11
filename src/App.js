@@ -6,6 +6,7 @@ import Admin from "./Pages/Admin.js";
 import VendorPanel from "./Pages/Vendor.js";
 import Test from "./Pages/Test.js";
 import CustomerPage from "./Pages/Customer.js";
+import Test2 from "./Pages/Test2.js";
 
 const App = () => {
   return (
@@ -16,7 +17,7 @@ const App = () => {
         <Route path="/admin" element={<Admin />} />
         <Route path="/customer" element={<CustomerPage />} />
         <Route path="/vendor" element={<VendorPanel />} />
-        <Route path="/test" element={<Test />} />
+        <Route path="/test" element={<Test2 />} />
       </Routes>
     </BrowserRouter>
   );

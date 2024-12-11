@@ -6,31 +6,60 @@ const CustomerPage = () => {
   const [rows, setRows] = useState([]);
   const [ticketsToBuy, setTicketsToBuy] = useState(1);
 
+  const [maxTicketCapacity, setMaxTicketCapacity] = useState(null);
+  const [seatsPerRaw, setSeatsPerRaw] = useState(null);
+  const [totalTicketBooked, setTotalTicketBooked] = useState(null);
+
   // Fetch configuration on mount
   useEffect(() => {
     const fetchConfig = async () => {
       try {
         const response = await axios.get("http://localhost:8080/configuration");
+
+        // Destructure the necessary fields from the response
+        const { maxTicketCapacity, seatsPerRaw, totalTicketBooked } =
+          response.data;
+
+        // Assign values to state
+        setMaxTicketCapacity(maxTicketCapacity);
+        setSeatsPerRaw(seatsPerRaw);
+        setTotalTicketBooked(totalTicketBooked);
+
+        console.log("Max Ticket Capacity:", maxTicketCapacity);
+        console.log("Seats Per Row:", seatsPerRaw);
+        console.log("totalTicketBooked:", totalTicketBooked);
+
         console.log("API Response:", response.data);
         const configData = response.data;
+        console.log("ConfigData ", configData);
+
         setConfig(configData);
+        console.log("Global ", config);
 
+        /*
         // Validate and calculate layout dimensions
-        const maxTicketCapacity = configData.maxTicketCapacity || 48;
-        const seatPerRaw = configData.seatPerRaw || 5;
-        console.log("Max Ticket Capacity:", maxTicketCapacity);
-        console.log("Seats Per Row:", seatPerRaw);
+        setCustomerData({
+          maxTicketCapacity: configData.maxTicketCapacity,
+          seatPerRaw: configData.seatPerRaw,
+          totalTicketBooked: configData.totalTicketBooked,
+        });
+        */
 
-        if (maxTicketCapacity && seatPerRaw) {
-          const rowsCount = Math.ceil(maxTicketCapacity / seatPerRaw);
+        // const maxTicketCapacity = configData.maxTicketCapacity || 48;
+        // const seatPerRaw = configData.seatPerRaw || 5;
+        // let noOfSeatBooked = configData.totalTicketBooked || 2;
+
+        // Calculate layout dimensions
+        if (maxTicketCapacity && seatsPerRaw) {
+          const rowsCount = Math.ceil(maxTicketCapacity / seatsPerRaw);
           const layout = [];
-          let seatCounter = 1;
+          let seatCounter = totalTicketBooked; //1;
 
           for (let i = 0; i < rowsCount; i++) {
             const row = [];
             for (
               let j = 0;
-              j < seatPerRaw && seatCounter <= maxTicketCapacity;
+              j < seatsPerRaw && seatCounter <= maxTicketCapacity;
               j++
             ) {
               row.push(seatCounter);
@@ -38,6 +67,28 @@ const CustomerPage = () => {
             }
             layout.push(row);
           }
+          /*
+        if (customerData.maxTicketCapacity && customerData.seatPerRaw) {
+          const rowsCount = Math.ceil(
+            customerData.maxTicketCapacity / customerData.seatPerRaw
+          );
+          const layout = [];
+          let seatCounter = customerData.noOfSeatBooked; //1;
+
+          for (let i = 0; i < rowsCount; i++) {
+            const row = [];
+            for (
+              let j = 0;
+              j < customerData.seatPerRaw &&
+              seatCounter <= customerData.maxTicketCapacity;
+              j++
+            ) {
+              row.push(seatCounter);
+              seatCounter++;
+            }
+            layout.push(row);
+          }
+          */
 
           console.log("Generated Rows:", layout);
           setRows(layout);
@@ -93,12 +144,22 @@ const CustomerPage = () => {
         )
         .then((response) => {
           const res = response.data;
-          console.log(res);
-          // show the response (sucess, not) in UI
+          //console.log(res);
+          // show the response/res (sucess, not) in UI
         });
       alert(`Updated isAvaialble in ticket table for ${ticketsToBuy} tickets`);
     } catch (error) {
-      alert("Could not update the records in Ticket table: " + error);
+      alert("Did not update the records in Ticket table: " + error);
+    }
+
+    // 3) Update record of the configuration table in db (totalTicketBooked)
+    try {
+      await axios.post(
+        `http://localhost:8080/configuration/update?numberOfTickets=${ticketsToBuy}`
+      );
+      alert("Configuration updated successfully!");
+    } catch (error) {
+      alert("Did not update the configuration table: " + error);
     }
   };
 
@@ -115,8 +176,8 @@ const CustomerPage = () => {
           {rows.map((row, rowIndex) => (
             <div key={rowIndex} className="flex gap-2 justify-start">
               {row.map((seat) => {
-                const isReleased = seat <= config.totalTickets;
-                const isBooked = seat <= config.totalTicketBooked;
+                const isReleased = seat <= config.totalTickets + 1;
+                const isBooked = seat <= totalTicketBooked; //config.totalTicketBooked + 1;
                 return (
                   <div
                     key={seat}

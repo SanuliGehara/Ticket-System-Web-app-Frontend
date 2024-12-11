@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useParams } from "react-router-dom";
 
 const VendorPage = () => {
   const [vendorData, setVendorData] = useState({
@@ -26,7 +27,6 @@ const VendorPage = () => {
         } = response.data;
 
         setTotalTicketsInConfig(totalTickets);
-        console.log("total tick config: ", totalTicketsInConfig);
         const config = response.data;
 
         setVendorData({
@@ -36,11 +36,6 @@ const VendorPage = () => {
           remainingTickets: config.maxTicketCapacity - config.totalTickets,
           ticketsPerRelease: config.totalTicketsPerVendor,
         });
-
-        console.log(
-          "ticketsPerRelease from venData: ", // comes 0 in console
-          vendorData.ticketsPerRelease
-        );
 
         //setConDBtotTicket_P_Vendor(config.ticketsPerRelease);
       })
@@ -53,19 +48,15 @@ const VendorPage = () => {
   const handleReleaseTickets = () => {
     const { ticketsPerRelease } = vendorData;
 
-    console.log("ticketsPerRelease from handle: ", ticketsPerRelease); //comes 8
-
     const ConDBtotTicket_P_Vendor = 5;
 
     // 1) Instert new ticket to ticket table
     //Check if the total tickets per release exceeds defined value in configuration
     if (vendorData.ticketsPerRelease > ConDBtotTicket_P_Vendor) {
-      console.log("Number larger than " + conDBtotTicket_P_Vendor);
       alert(
         `${vendorData.ticketsPerRelease} larger than ${conDBtotTicket_P_Vendor}`
       );
     } else {
-      console.log("total tick per release " + conDBtotTicket_P_Vendor);
       axios
         .post("http://localhost:8080/tickets/add", { count: ticketsPerRelease })
         .then((response) => {
@@ -78,8 +69,6 @@ const VendorPage = () => {
               prevState.maxCapacity -
               (prevState.totalTickets + ticketsPerRelease),
           }));
-          console.log("final vendor data: ", vendorData);
-          console.log("final ticketsPerRelease: ", ticketsPerRelease);
 
           // 2) Update the configuration table, totalTickets = totalTickets + ticketsPerRelease
           try {
@@ -123,8 +112,8 @@ const VendorPage = () => {
             );
           }
 
-          //to be update vendor table, for the peticlur vendor , totNumOfTicketReleased = totNumOfTicketReleased + ticketsPerRelease
-          // to be update vendor table, for the peticlur vendor , lastReleasedTime = currentTime as a String
+          //Update vendor table, for the peticlur vendor , totNumOfTicketReleased = totNumOfTicketReleased + ticketsPerRelease
+          //& lastReleasedTime = currentTime as a String
         })
         .catch((error) => {
           setMessage("Error releasing tickets: " + error.message);

@@ -1,11 +1,15 @@
+import axios from "axios";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const AuthPage = () => {
   const [activeTab, setActiveTab] = useState("login");
+  const [errorMessage, setErrorMessage] = useState("");
   const [credentials, setCredentials] = useState({
     username: "",
     password: "",
+    email: "",
+    userType: "",
   });
   const navigate = useNavigate();
 
@@ -14,18 +18,48 @@ const AuthPage = () => {
     setCredentials((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (credentials.username === "admin" && credentials.password === "12345") {
-      navigate("/home");
-    } else {
-      alert("Invalid username or password");
+    try {
+      // Login if admin
+      if (
+        credentials.username === "admin" &&
+        credentials.password === "12345" &&
+        credentials.userType === "ADMIN"
+      ) {
+        navigate("/admin");
+      } else {
+        // Login for customer and vendor
+        const response = await axios.post(
+          `http://localhost:8080/auth/login?userType=${credentials.userType}&username=${credentials.username}&password=${credentials.password}`
+        );
+        navigate(response.data);
+      }
+    } catch (error) {
+      setErrorMessage("Wrong username or password");
     }
   };
 
-  const handleSignUp = (e) => {
+  const handleSignUp = async (e) => {
     e.preventDefault();
-    alert("Signup successful (Demo purpose)");
+    const urlParamUserType =
+      credentials.userType === "VENDOR"
+        ? "vendors"
+        : credentials.userType === "CUSTOMER"
+        ? "customers"
+        : "admin";
+
+    const requestBody = credentials;
+    try {
+      const response = await axios.post(
+        `http://localhost:8080/${urlParamUserType}/add`,
+        requestBody
+      );
+
+      navigate("/" + credentials.userType + "?" + response.data.username);
+    } catch (error) {
+      setErrorMessage("Wrong username or password");
+    }
   };
 
   return (
@@ -55,6 +89,7 @@ const AuthPage = () => {
         </div>
 
         {activeTab === "login" && (
+          // Handle login section
           <form onSubmit={handleLogin}>
             <div className="mb-4">
               <label
@@ -81,7 +116,7 @@ const AuthPage = () => {
                 Password
               </label>
               <input
-                type="password"
+                type="text"
                 id="password"
                 name="password"
                 value={credentials.password}
@@ -89,6 +124,25 @@ const AuthPage = () => {
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
+            </div>
+            <div className="mb-6">
+              <label
+                htmlFor="userType"
+                className="block text-gray-700 font-medium mb-2"
+              >
+                User Type
+              </label>
+              <select
+                name="userType"
+                value={credentials.userType}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="selectUser">Select user type</option>
+                <option value="CUSTOMER">Customer</option>
+                <option value="VENDOR">Vendor</option>
+                <option value="ADMIN">Admin</option>
+              </select>
             </div>
             <button
               type="submit"
@@ -100,6 +154,7 @@ const AuthPage = () => {
         )}
 
         {activeTab === "signup" && (
+          // Handle sign up section
           <form onSubmit={handleSignUp}>
             <div className="mb-4">
               <label
@@ -124,12 +179,48 @@ const AuthPage = () => {
                 Password
               </label>
               <input
-                type="password"
+                type="text"
                 id="password"
                 name="password"
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
+            </div>
+            <div className="mb-6">
+              <label
+                htmlFor="email"
+                className="block text-gray-700 font-medium mb-2"
+              >
+                Email
+              </label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={credentials.email}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            <div className="mb-6">
+              <label
+                htmlFor="userType"
+                className="block text-gray-700 font-medium mb-2"
+              >
+                User Type
+              </label>
+              <select
+                value={credentials.userType}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="selectUser">Select user type</option>
+                <option value="CUSTOMER">Customer</option>
+                <option value="VENDOR">Vendor</option>
+                <option value="ADMIN">Admin</option>
+              </select>
             </div>
             <button
               type="submit"

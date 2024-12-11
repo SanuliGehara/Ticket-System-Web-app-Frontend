@@ -25,16 +25,9 @@ const CustomerPage = () => {
         setSeatsPerRaw(seatsPerRaw);
         setTotalTicketBooked(totalTicketBooked);
 
-        console.log("Max Ticket Capacity:", maxTicketCapacity);
-        console.log("Seats Per Row:", seatsPerRaw);
-        console.log("totalTicketBooked:", totalTicketBooked);
-
-        console.log("API Response:", response.data);
         const configData = response.data;
-        console.log("ConfigData ", configData);
 
         setConfig(configData);
-        console.log("Global ", config);
 
         // Calculate layout dimensions
         if (maxTicketCapacity && seatsPerRaw) {
@@ -55,7 +48,6 @@ const CustomerPage = () => {
             layout.push(row);
           }
 
-          console.log("Generated Rows:", layout);
           setRows(layout);
         }
       } catch (error) {
@@ -74,7 +66,6 @@ const CustomerPage = () => {
     // update total tickets booked to update the layout
     const newtotBokedTickets = totalTicketBooked + ticketsToBuy;
     setTotalTicketBooked(newtotBokedTickets);
-    console.log("New total tic booked:", newtotBokedTickets);
 
     // 1) Instert a record to transaction table in db
     let dbTicketId = ticketsToBuy + "-<";
@@ -115,8 +106,6 @@ const CustomerPage = () => {
         )
         .then((response) => {
           const res = response.data;
-          //console.log(res);
-          // show the response/res (sucess, not) in UI
         });
       alert(`Updated isAvaialble in ticket table for ${ticketsToBuy} tickets`);
     } catch (error) {
@@ -147,8 +136,8 @@ const CustomerPage = () => {
           {rows.map((row, rowIndex) => (
             <div key={rowIndex} className="flex gap-2 justify-start">
               {row.map((seat) => {
-                const isReleased = seat <= config.totalTickets; //config.totalTickets + 2; total tickets released by vednors
-                const isBooked = seat <= totalTicketBooked; //config.totalTicketBooked + 1; new:   totalTicketBooked + 2
+                const isReleased = seat <= config.totalTickets;
+                const isBooked = seat <= totalTicketBooked;
                 return (
                   <div
                     key={seat}

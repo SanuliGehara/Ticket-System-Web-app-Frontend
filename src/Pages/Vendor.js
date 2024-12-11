@@ -9,14 +9,24 @@ const VendorPage = () => {
     remainingTickets: 0,
     ticketsPerRelease: 0,
   });
+  const [totalTicketsInConfig, setTotalTicketsInConfig] = useState(0);
   const [message, setMessage] = useState("");
   const [conDBtotTicket_P_Vendor, setConDBtotTicket_P_Vendor] = useState(5);
 
   // Fetch ticket pool information from the backend
   useEffect(() => {
     axios
-      .get("http://localhost:8080/configuration") // Adjust endpoint based on backend
+      .get("http://localhost:8080/configuration")
       .then((response) => {
+        const {
+          maxTicketCapacity,
+          totalTickets,
+          ticketReleaseRate,
+          totalTicketsPerVendor,
+        } = response.data;
+
+        setTotalTicketsInConfig(totalTickets);
+        console.log("total tick config: ", totalTicketsInConfig);
         const config = response.data;
 
         setVendorData({
@@ -26,6 +36,11 @@ const VendorPage = () => {
           remainingTickets: config.maxTicketCapacity - config.totalTickets,
           ticketsPerRelease: config.totalTicketsPerVendor,
         });
+
+        console.log(
+          "ticketsPerRelease from venData: ", // comes 0 in console
+          vendorData.ticketsPerRelease
+        );
 
         //setConDBtotTicket_P_Vendor(config.ticketsPerRelease);
       })
@@ -37,9 +52,13 @@ const VendorPage = () => {
   // Handle ticket release
   const handleReleaseTickets = () => {
     const { ticketsPerRelease } = vendorData;
+
+    console.log("ticketsPerRelease from handle: ", ticketsPerRelease); //comes 8
+
     const ConDBtotTicket_P_Vendor = 5;
+
+    // 1) Instert new ticket to ticket table
     //Check if the total tickets per release exceeds defined value in configuration
-    // if (vendorData.ticketsPerRelease > conDBtotTicket_P_Vendor) {
     if (vendorData.ticketsPerRelease > ConDBtotTicket_P_Vendor) {
       console.log("Number larger than " + conDBtotTicket_P_Vendor);
       alert(
@@ -48,7 +67,7 @@ const VendorPage = () => {
     } else {
       console.log("total tick per release " + conDBtotTicket_P_Vendor);
       axios
-        .post("http://localhost:8080/tickets/add", { count: ticketsPerRelease }) // Adjust endpoint
+        .post("http://localhost:8080/tickets/add", { count: ticketsPerRelease })
         .then((response) => {
           setMessage("Tickets released successfully!");
           // Update the remainingTickets and totalTickets
@@ -59,7 +78,19 @@ const VendorPage = () => {
               prevState.maxCapacity -
               (prevState.totalTickets + ticketsPerRelease),
           }));
-          // to be update the config table, totalTickets = totalTickets + ticketsPerRelease
+          console.log("final vendor data: ", vendorData);
+          console.log("final ticketsPerRelease: ", ticketsPerRelease);
+
+          // 2) Update the configuration table, totalTickets = totalTickets + ticketsPerRelease
+          try {
+            axios.post(
+              `http://localhost:8080/configuration/updateRelease?totalReleased=${ticketsPerRelease}`
+            );
+            alert("Configuration updated successfully!");
+          } catch (error) {
+            alert("Configuration table did not update unsucessful: ", error);
+          }
+
           //to be update vendor table, for the peticlur vendor , totNumOfTicketReleased = totNumOfTicketReleased + ticketsPerRelease
           // to be update vendor table, for the peticlur vendor , lastReleasedTime = currentTime as a String
           // to be add new record, to transaction table, log vendor booking information

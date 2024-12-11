@@ -91,9 +91,40 @@ const VendorPage = () => {
             alert("Configuration table did not update unsucessful: ", error);
           }
 
+          // 3) Insert new record, to transaction table, log vendor release information
+          let dbTicketId = ticketsPerRelease + "-<";
+          let seperator, closeBracket;
+          if (ticketsPerRelease === 1) {
+            seperator = "";
+            closeBracket = ">";
+          } else {
+            seperator = "_";
+            closeBracket = ">";
+          }
+
+          // Create ticket ID's to enter to db
+          for (let i = 1; i <= ticketsPerRelease; i++) {
+            if (i === ticketsPerRelease) {
+              seperator = "";
+            }
+            dbTicketId = dbTicketId + i + seperator;
+          }
+          dbTicketId = dbTicketId + closeBracket;
+          alert("Number of Tickets released: " + dbTicketId);
+
+          try {
+            axios.post(
+              `http://localhost:8080/transactions/add?type=RELEASE&ticketId=${dbTicketId}&vendorId=wasa@gmail.com`
+            );
+            alert(`Successfully released ${ticketsPerRelease}!`); // transaction record saved
+          } catch (error) {
+            alert(
+              "Ticket release did not insert to the Transaction table: " + error
+            );
+          }
+
           //to be update vendor table, for the peticlur vendor , totNumOfTicketReleased = totNumOfTicketReleased + ticketsPerRelease
           // to be update vendor table, for the peticlur vendor , lastReleasedTime = currentTime as a String
-          // to be add new record, to transaction table, log vendor booking information
         })
         .catch((error) => {
           setMessage("Error releasing tickets: " + error.message);

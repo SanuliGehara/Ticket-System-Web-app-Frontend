@@ -98,7 +98,7 @@ const CustomerPage = () => {
     alert("db ticket id: " + dbTicketId);
     try {
       await axios.post(
-        `http://localhost:8080/transactions/add?type=PURCHASE&ticketId=${dbTicketId}&customerId=wasa@gmail.com`
+        `http://localhost:8080/transactions/add?type=PURCHASE&ticketId=${dbTicketId}&customerId=gehara@gmail.com`
       );
       alert(`Successfully bought ${ticketsToBuy} tickets for RS ${totalPrice}`); // transaction record saved
     } catch (error) {

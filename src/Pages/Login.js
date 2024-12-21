@@ -40,6 +40,7 @@ const AuthPage = () => {
     }
   };
 
+  // Handle sign up button event by creating new user in database, redirects to the specific page
   const handleSignUp = async (e) => {
     e.preventDefault();
     const urlParamUserType =
@@ -55,7 +56,7 @@ const AuthPage = () => {
         `http://localhost:8080/${urlParamUserType}/add`,
         requestBody
       );
-
+      console.log("/" + credentials.userType + "?" + response.data.username);
       navigate("/" + credentials.userType + "?" + response.data.username);
     } catch (error) {
       setErrorMessage("Wrong username or password");
@@ -212,6 +213,7 @@ const AuthPage = () => {
                 User Type
               </label>
               <select
+                name="userType"
                 value={credentials.userType}
                 onChange={handleInputChange}
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"

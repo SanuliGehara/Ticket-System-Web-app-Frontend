@@ -124,69 +124,71 @@ const CustomerPage = () => {
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Customer Page</h1>
+    <div className="flex justify-center items-center min-h-screen p-6">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold mb-4">Customer Dashboard</h1>
 
-      {/* Ticket Pool Layout */}
-      <div className="mb-6">
-        <h2 className="text-xl mb-2">Screen</h2>
-        <div className="border-t border-gray-400 w-full mb-4"></div>
-        <div className="space-y-2">
-          {/* Render each row */}
-          {rows.map((row, rowIndex) => (
-            <div key={rowIndex} className="flex gap-2 justify-start">
-              {row.map((seat) => {
-                const isReleased = seat <= config.totalTickets;
-                const isBooked = seat <= totalTicketBooked;
-                return (
-                  <div
-                    key={seat}
-                    className={`w-8 h-8 rounded-full border ${
-                      isBooked
-                        ? "bg-red-500"
-                        : isReleased
-                        ? "bg-green-500"
-                        : "bg-gray-200"
-                    }`}
-                  ></div>
-                );
-              })}
-            </div>
-          ))}
+        {/* Ticket Pool Layout */}
+        <div className="mb-6">
+          <h2 className="text-xl mb-2">Screen</h2>
+          <div className="border-t border-gray-400 w-full mb-4"></div>
+          <div className="space-y-2">
+            {/* Render each row */}
+            {rows.map((row, rowIndex) => (
+              <div key={rowIndex} className="flex gap-2 justify-start">
+                {row.map((seat) => {
+                  const isReleased = seat <= config.totalTickets;
+                  const isBooked = seat <= totalTicketBooked;
+                  return (
+                    <div
+                      key={seat}
+                      className={`w-8 h-8 rounded-full border ${
+                        isBooked
+                          ? "bg-red-500"
+                          : isReleased
+                          ? "bg-green-500"
+                          : "bg-gray-200"
+                      }`}
+                    ></div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Purchase Form */}
-      <div className="mb-6">
-        <label htmlFor="ticketsToBuy" className="block mb-2">
-          No. of Tickets to Buy:
-        </label>
-        <input
-          id="ticketsToBuy"
-          type="number"
-          value={ticketsToBuy}
-          min={1}
-          max={config.maxTicketCapacity - config.totalTicketBooked}
-          onChange={(e) => setTicketsToBuy(Number(e.target.value))}
-          className="border rounded px-2 py-1"
-        />
-      </div>
+        {/* Purchase Form */}
+        <div className="mb-6">
+          <label htmlFor="ticketsToBuy" className="block mb-2">
+            No. of Tickets to Buy:
+          </label>
+          <input
+            id="ticketsToBuy"
+            type="number"
+            value={ticketsToBuy}
+            min={1}
+            max={config.maxTicketCapacity - config.totalTicketBooked}
+            onChange={(e) => setTicketsToBuy(Number(e.target.value))}
+            className="border rounded px-2 py-1"
+          />
+        </div>
 
-      <div className="mb-6">
-        <p>
-          Total Price (RS):{" "}
-          <span className="font-bold">
-            {ticketsToBuy * config.priceOfATicket}
-          </span>
-        </p>
-      </div>
+        <div className="mb-6">
+          <p>
+            Total Price (RS):{" "}
+            <span className="font-bold">
+              {ticketsToBuy * config.priceOfATicket}
+            </span>
+          </p>
+        </div>
 
-      <button
-        onClick={handlePurchase}
-        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-      >
-        Buy Tickets
-      </button>
+        <button
+          onClick={handlePurchase}
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        >
+          Buy Tickets
+        </button>
+      </div>
     </div>
   );
 };
